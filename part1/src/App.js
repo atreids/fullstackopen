@@ -4,7 +4,24 @@ const Button = ({ onClick, name }) => {
   return <button onClick={onClick}>{name}</button>;
 };
 
+const Statistics = (props) => {
+  if (props.stats.total === 0) {
+    return <p>No feedback entered yet.</p>;
+  }
+  return (
+    <>
+      <h1>Stats</h1>
+      <Display count={props.stats.good} name="Good" />
+      <Display count={props.stats.neutral} name="Neutral" />
+      <Display count={props.stats.bad} name="Bad" />
+      <Display count={props.stats.total} name="Total" />
+      <Display count={props.stats.avgScore} name="Average Score" />
+    </>
+  );
+};
+
 const Display = ({ count, name }) => {
+  console.log(count);
   return (
     <p>
       {name}: {count}
@@ -14,40 +31,56 @@ const Display = ({ count, name }) => {
 
 const App = () => {
   // save clicks of each button to its own state
-  const [good, setGood] = useState(0);
-  const [neutral, setNeutral] = useState(0);
-  const [bad, setBad] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [averageScore, setAverageScore] = useState(0);
   const isMounted = useRef(false);
+  const [stats, setStats] = useState({
+    good: 0,
+    neutral: 0,
+    bad: 0,
+    total: 0,
+    avgScore: 0,
+  });
 
   useEffect(() => {
     if (isMounted.current) {
-      setTotal(total + 1);
-      setAverageScore((good / (total + 1)) * 100);
+      let avgScore = (stats.good / (stats.total + 1)) * 100;
+      setStats({
+        ...stats,
+        total: stats.total + 1,
+        avgScore: avgScore,
+      });
     } else {
       isMounted.current = true;
     }
-  }, [good, neutral, bad]);
+  }, [stats.good, stats.bad, stats.neutral]);
 
-  const incrementer = (rating) => {
-    rating === "bad" ? setBad(bad + 1) : setBad(bad);
-    rating === "good" ? setGood(good + 1) : setGood(good);
-    rating === "neutral" ? setNeutral(neutral + 1) : setNeutral(neutral);
+  const incGood = () => {
+    setStats({
+      ...stats,
+      good: stats.good + 1,
+    });
+  };
+
+  const incNeutral = () => {
+    setStats({
+      ...stats,
+      neutral: stats.neutral + 1,
+    });
+  };
+
+  const incBad = () => {
+    setStats({
+      ...stats,
+      bad: stats.bad + 1,
+    });
   };
 
   return (
     <div>
       <h1>Give Feedback</h1>
-      <Button onClick={() => incrementer("good")} name="Good" />
-      <Button onClick={() => incrementer("neutral")} name="Neutral" />
-      <Button onClick={() => incrementer("bad")} name="Bad" />
-      <h1>Statistics</h1>
-      <Display count={good} name="Good" />
-      <Display count={neutral} name="Neutral" />
-      <Display count={bad} name="Bad" />
-      <Display count={total} name="Total" />
-      <Display count={averageScore} name="Average Score" />
+      <Button onClick={incGood} name="Good" />
+      <Button onClick={incNeutral} name="Neutral" />
+      <Button onClick={incBad} name="Bad" />
+      <Statistics stats={stats} />
     </div>
   );
 };
