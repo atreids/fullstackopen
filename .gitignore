@@ -5,6 +5,10 @@
 /part1/.pnp
 /part1/.pnp.js
 
+/part2/node_modules
+/part2/.pnp
+/part2/.pnp.js
+
 # testing
 /part1/coverage
 
@@ -21,3 +25,19 @@
 /part1/npm-debug.log*
 /part1/yarn-debug.log*
 /part1/yarn-error.log*
+
+# testing
+/part2/coverage
+
+# production
+/part2/build
+
+# misc
+/part2/.DS_Store
+/part2/.env.local
+/part2/.env.development.local
+/part2/.env.test.local
+/part2/.env.production.local
+/part2/npm-debug.log*
+/part2/yarn-debug.log*
+/part2/yarn-error.log*
