@@ -1,21 +1,38 @@
-import { useState } from "react";
-import areTheseObjectsEqual from "./components/AreTheseObjectsEqual";
+import { useState, useEffect } from "react";
 import PersonsList from "./components/PersonsList";
 import EntryForm from "./components/EntryForm";
 import Filter from "./components/Filter";
+import personServices from "./services/persons";
+
+const ErrorNotification = ({ message }) => {
+  if (message === null) {
+    return null;
+  }
+  return <div className="error">{message}</div>;
+};
+
+const SuccessNotification = ({ message }) => {
+  if (message === null) {
+    return null;
+  }
+  return <div className="success">{message}</div>;
+};
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: "Arto Hellas", number: "040-123456" },
-    { name: "Ada Lovelace", number: "39-44-5323523" },
-    { name: "Dan Abramov", number: "12-43-234345" },
-    { name: "Mary Poppendieck", number: "39-23-6423122" },
-  ]);
-
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [personsToShow, setPersonsToShow] = useState(persons);
   const [filter, setFilter] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  useEffect(() => {
+    personServices.getAll().then((initialPhonebook) => {
+      setPersons(initialPhonebook);
+      setPersonsToShow(initialPhonebook);
+    });
+  }, []);
 
   const handleNumberChange = (event) => {
     setNewNumber(event.target.value);
@@ -32,33 +49,72 @@ const App = () => {
   };
 
   const savePerson = (event) => {
+    //preventing default page reload
     event.preventDefault();
     const newPerson = {
       name: newName,
       number: newNumber,
     };
 
-    if (personExist(newPerson)) {
-      alert(newName + " already exists");
-      setNewName("");
-      setNewNumber("");
-      return;
-    }
-
-    setPersons(persons.concat(newPerson));
-    setPersonsToShow(persons.concat(newPerson));
-    setFilter("");
-    setNewName("");
-    setNewNumber("");
-  };
-
-  const personExist = (newPerson) => {
+    //Checking if the person already exists within the phonebook
     for (const person of persons) {
-      if (areTheseObjectsEqual(newPerson, person)) {
-        return true;
+      if (newPerson.name === person.name) {
+        if (
+          window.confirm(
+            `${newPerson.name} already exists, replace the old number with a new number?`
+          )
+        ) {
+          personServices
+            .update(person.id, newPerson)
+            .then((updatedPerson) => {
+              //updates displayed list by replacing the exisitng list with a new one where
+              //only the updated record is replaced.
+              setPersonsToShow(
+                personsToShow.map((person) =>
+                  person.id === updatedPerson.id ? updatedPerson : person
+                )
+              );
+              setPersons(
+                persons.map((person) =>
+                  person.id === updatedPerson.id ? updatedPerson : person
+                )
+              );
+              setSuccessMessage(`Successfully updated ${updatedPerson.name}`);
+              setTimeout(() => {
+                setSuccessMessage(null);
+              }, 5000);
+            })
+            .catch((error) => {
+              setErrorMessage(
+                `An error occured: ${person.name}'s information has already been removed from the server.`
+              );
+              personServices.getAll().then((serverPhonebook) => {
+                setPersons(serverPhonebook);
+                setPersonsToShow(serverPhonebook);
+              });
+              setTimeout(() => {
+                setErrorMessage(null);
+              }, 5000);
+            });
+        }
+        setNewName("");
+        setNewNumber("");
+        return;
       }
     }
-    return false;
+
+    //if person doesn't exist, this creates a new person, updates json-db and local state
+    personServices.create(newPerson).then((returnedPerson) => {
+      setPersons(persons.concat(returnedPerson));
+      setPersonsToShow(persons.concat(returnedPerson));
+      setFilter("");
+      setNewName("");
+      setNewNumber("");
+      setSuccessMessage(`Successfully added ${returnedPerson.name}`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+    });
   };
 
   const updateList = (filter) => {
@@ -80,11 +136,32 @@ const App = () => {
     );
   };
 
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Do you really want to delete '${name}'?`)) {
+      personServices
+        .deletePerson(id)
+        .then((response) => {
+          setPersons(persons.filter((person) => person.id !== id));
+          setPersonsToShow(personsToShow.filter((person) => person.id !== id));
+          setSuccessMessage(`Deleted ${name}`);
+          setTimeout(() => {
+            setSuccessMessage(null);
+          }, 5000);
+        })
+        .catch((error) => {
+          setErrorMessage("An error occured");
+          setTimeout(() => {
+            setErrorMessage(null);
+          }, 5000);
+        });
+    }
+  };
+
   return (
     <div>
       <h2>Phonebook</h2>
-      <Filter filter={filter} handleFilterChange={handleFilterChange} />
-
+      <ErrorNotification message={errorMessage} />
+      <SuccessNotification message={successMessage} />
       <EntryForm
         savePerson={savePerson}
         newName={newName}
@@ -92,7 +169,8 @@ const App = () => {
         handleNameChange={handleNameChange}
         handleNumberChange={handleNumberChange}
       />
-      <PersonsList personsToShow={personsToShow} />
+      <Filter filter={filter} handleFilterChange={handleFilterChange} />
+      <PersonsList personsToShow={personsToShow} handleDelete={handleDelete} />
     </div>
   );
 };
