@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import areTheseObjectsEqual from "./components/AreTheseObjectsEqual";
 import PersonsList from "./components/PersonsList";
 import EntryForm from "./components/EntryForm";
 import Filter from "./components/Filter";
+import personServices from "./services/persons";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -13,9 +12,9 @@ const App = () => {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    axios.get("http://localhost:3001/persons").then((response) => {
-      setPersons(response.data);
-      setPersonsToShow(response.data);
+    personServices.getAll().then((initialPhonebook) => {
+      setPersons(initialPhonebook);
+      setPersonsToShow(initialPhonebook);
     });
   }, []);
 
@@ -34,33 +33,50 @@ const App = () => {
   };
 
   const savePerson = (event) => {
+    //preventing default page reload
     event.preventDefault();
     const newPerson = {
       name: newName,
       number: newNumber,
     };
 
-    if (personExist(newPerson)) {
-      alert(newName + " already exists");
-      setNewName("");
-      setNewNumber("");
-      return;
-    }
-
-    setPersons(persons.concat(newPerson));
-    setPersonsToShow(persons.concat(newPerson));
-    setFilter("");
-    setNewName("");
-    setNewNumber("");
-  };
-
-  const personExist = (newPerson) => {
+    //Checking if the person already exists within the phonebook
     for (const person of persons) {
-      if (areTheseObjectsEqual(newPerson, person)) {
-        return true;
+      if (newPerson.name === person.name) {
+        if (
+          window.confirm(
+            `${newPerson.name} already exists, replace the old number with a new number?`
+          )
+        ) {
+          personServices.update(person.id, newPerson).then((updatedPerson) => {
+            //updates displayed list by replacing the exisitng list with a new one where
+            //only the updated record is replaced.
+            setPersonsToShow(
+              personsToShow.map((person) =>
+                person.id === updatedPerson.id ? updatedPerson : person
+              )
+            );
+            setPersons(
+              persons.map((person) =>
+                person.id === updatedPerson.id ? updatedPerson : person
+              )
+            );
+          });
+        }
+        setNewName("");
+        setNewNumber("");
+        return;
       }
     }
-    return false;
+
+    //if person doesn't exist, this creates a new person, updates json-db and local state
+    personServices.create(newPerson).then((returnedPerson) => {
+      setPersons(persons.concat(returnedPerson));
+      setPersonsToShow(persons.concat(returnedPerson));
+      setFilter("");
+      setNewName("");
+      setNewNumber("");
+    });
   };
 
   const updateList = (filter) => {
@@ -82,6 +98,15 @@ const App = () => {
     );
   };
 
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Do you really want to delete '${name}'?`)) {
+      personServices.deletePerson(id).then((response) => {
+        alert(`${name} was deleted.`);
+        setPersonsToShow(personsToShow.filter((person) => person.id !== id));
+      });
+    }
+  };
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -94,7 +119,7 @@ const App = () => {
         handleNameChange={handleNameChange}
         handleNumberChange={handleNumberChange}
       />
-      <PersonsList personsToShow={personsToShow} />
+      <PersonsList personsToShow={personsToShow} handleDelete={handleDelete} />
     </div>
   );
 };
