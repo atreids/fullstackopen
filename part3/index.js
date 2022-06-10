@@ -1,9 +1,12 @@
 const { response } = require("express");
 const express = require("express");
+const cors = require("cors");
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use(cors());
+app.use(express.static("build"));
 
 let notes = [
   {
@@ -61,7 +64,7 @@ app.delete("/api/notes/:id", (req, res) => {
 
 const generateId = () => {
   const maxId = notes.length > 0 ? Math.max(...notes.map((n) => n.id)) : 0;
-  return maxId;
+  return maxId + 1;
 };
 
 app.post("/api/notes", (request, response) => {
