@@ -55,7 +55,7 @@ const App = () => {
       name: newName,
       number: newNumber,
     };
-
+    console.log(newPerson);
     //Checking if the person already exists within the phonebook
     for (const person of persons) {
       if (newPerson.name === person.name) {
@@ -105,12 +105,12 @@ const App = () => {
 
     //if person doesn't exist, this creates a new person, updates json-db and local state
     personServices.create(newPerson).then((returnedPerson) => {
-      setPersons(persons.concat(returnedPerson));
-      setPersonsToShow(persons.concat(returnedPerson));
+      setPersons(persons.concat(newPerson));
+      setPersonsToShow(persons.concat(newPerson));
       setFilter("");
       setNewName("");
       setNewNumber("");
-      setSuccessMessage(`Successfully added ${returnedPerson.name}`);
+      setSuccessMessage(`Successfully added ${newPerson.name}`);
       setTimeout(() => {
         setSuccessMessage(null);
       }, 5000);
