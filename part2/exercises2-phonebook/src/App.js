@@ -55,6 +55,8 @@ const App = () => {
       name: newName,
       number: newNumber,
     };
+    console.log(newPerson);
+    console.log(persons);
     //Checking if the person already exists within the phonebook
     for (const person of persons) {
       if (newPerson.name === person.name) {

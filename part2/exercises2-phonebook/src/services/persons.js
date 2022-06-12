@@ -14,7 +14,7 @@ const update = (id, newObject) => {
 
 const create = (newObject) => {
   const request = axios.post(baseUrl, newObject);
-  request.then((response) => {
+  return request.then((response) => {
     if (response.status === 400) {
       update(response.body.personid, newObject).then(
         (response) => response.data
