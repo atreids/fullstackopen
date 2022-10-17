@@ -167,10 +167,11 @@ const resolvers = {
         );
         return {
           name: author.name,
-          born: args.setBornTo
-        }
+          id: author.id,
+          born: args.setBornTo,
+        };
       }
-      return null
+      return null;
     },
   },
 };
