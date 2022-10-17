@@ -26,6 +26,7 @@ const typeDefs = gql`
         name: String!
         bookCount: Int
         born: Int
+        id: ID
     }
 
     type Query {
@@ -43,6 +44,7 @@ const typeDefs = gql`
             genres: [String!]!
         ): Book!
         editAuthor(name: String!, setBornTo: Int!): Author
+        addAuthor(name: String!, born: Int!): Author!
     }
 `
 
@@ -67,8 +69,27 @@ const resolvers = {
         allBooks: async () => {
             try {
                 const books = await Book.find()
-                console.log(books)
-                return books
+                const authors = await Author.find()
+                const allBooks = books.map(
+                    ({ title, published, author_id, genres, id }) => {
+                        const [author] = authors.filter(
+                            (author) =>
+                                author.id.toString() === author_id.toString()
+                        )
+                        return {
+                            title,
+                            published,
+                            author: {
+                                name: author.name,
+                                born: author.born,
+                                id: author.id,
+                            },
+                            genres,
+                            id,
+                        }
+                    }
+                )
+                return allBooks
             } catch (e) {
                 throw new Error(e.message)
             }
@@ -76,12 +97,19 @@ const resolvers = {
         allAuthors: async () => {
             try {
                 const authors = await Author.find()
-                // const books = await Book.find()
-                // const bookcount = books.filter(
-                //     (b) => b.author === author.name
-                // ).length
-                console.log(authors)
-                return author
+                const books = await Book.find()
+                const allAuthors = authors.map((author) => {
+                    const bookcount = books.filter(
+                        (book) => book.author === author.id
+                    ).length
+                    return {
+                        name: author.name,
+                        bookCount: bookcount,
+                        born: author.born,
+                        id: author.id,
+                    }
+                })
+                return allAuthors
             } catch (error) {
                 throw new Error(error.message)
             }
@@ -90,27 +118,53 @@ const resolvers = {
     Mutation: {
         addBook: async (root, args) => {
             try {
-                const author = await Author.find({ name: args.author })
-                console.log(author)
-                const book = new Book({ ...args, author: author._id })
+                const [author] = await Author.find({ name: args.author })
+                if (!author) {
+                    throw new UserInputError('Author not found')
+                }
+                const book = new Book({ ...args, author_id: author.id })
                 await book.save()
-                return book
+                return {
+                    title: book.title,
+                    published: book.published,
+                    author: {
+                        name: author.name,
+                        id: author.id,
+                        born: author.born,
+                    },
+                    id: book.id,
+                    genres: book.genres,
+                }
             } catch (error) {
                 throw new UserInputError(error.message, {
                     invalidArgs: args,
                 })
             }
         },
-        editAuthor: (root, args) => {
-            const author = authors.find((a) => a.name === args.name)
+        addAuthor: async (root, args) => {
+            try {
+                const author = new Author({ ...args })
+                await author.save()
+                return author
+            } catch (error) {
+                throw new UserInputError(error.message, {
+                    invalidArgs: args,
+                })
+            }
+        },
+        editAuthor: async (root, args) => {
+            const [author] = await Author.find({ name: args.name })
             if (author) {
-                authors = authors.map((a) =>
-                    a.name === author.name ? { ...a, born: args.setBornTo } : a
-                )
-                return {
-                    name: author.name,
-                    id: author.id,
-                    born: args.setBornTo,
+                try {
+                    await Author.updateOne(
+                        { name: args.name },
+                        { born: args.setBornTo }
+                    )
+                    return author
+                } catch (error) {
+                    throw new UserInputError('Author Not Found', {
+                        invalidArgs: args,
+                    })
                 }
             }
             return null

@@ -10,9 +10,10 @@ const schema = new mongoose.Schema({
     published: {
         type: Number,
     },
-    author: {
+    author_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Author',
+        required: true,
     },
     genres: [{ type: String }],
 })
