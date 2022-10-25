@@ -123,6 +123,15 @@ const resolvers = {
                     throw new UserInputError('Author not found')
                 }
                 const book = new Book({ ...args, author_id: author.id })
+                const currentYear = new Date().getFullYear()
+                if (
+                    book.title.length < 2 ||
+                    book.published < 0 ||
+                    book.published > currentYear ||
+                    book.genres.length === 0
+                ) {
+                    throw new UserInputError('Invalid book details')
+                }
                 await book.save()
                 return {
                     title: book.title,
@@ -144,6 +153,14 @@ const resolvers = {
         addAuthor: async (root, args) => {
             try {
                 const author = new Author({ ...args })
+                const currentYear = new Date().getFullYear()
+                if (
+                    author.name.length < 2 ||
+                    author.born < 0 ||
+                    author.born > currentYear
+                ) {
+                    throw new UserInputError('Invalid Author Details')
+                }
                 await author.save()
                 return author
             } catch (error) {
