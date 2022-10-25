@@ -11,6 +11,7 @@ db.createUser({
 
 db.createCollection('authors')
 db.createCollection('books')
+db.createCollection('users')
 
 // db.authors.insertMany([
 //     {

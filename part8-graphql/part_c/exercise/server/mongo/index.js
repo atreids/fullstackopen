@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
+const User = require('./models/user')
 const { MONGO_URL } = require('../util/config')
 
 if (MONGO_URL && !mongoose.connection.readyState) {
@@ -14,4 +15,5 @@ if (MONGO_URL && !mongoose.connection.readyState) {
 module.exports = {
     Author,
     Book,
+    User,
 }
