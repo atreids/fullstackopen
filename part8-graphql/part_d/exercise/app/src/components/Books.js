@@ -5,7 +5,6 @@ const Books = (props) => {
     const result = useQuery(ALL_BOOKS)
 
     if (!props.show) {
-        console.log('book list hidden')
         return null
     }
 

@@ -13,6 +13,12 @@ db.createCollection('authors')
 db.createCollection('books')
 db.createCollection('users')
 
+db.users.insertOne({
+    username: 'aaron',
+    password: 'password',
+    favouriteGenre: 'Fiction',
+})
+
 // db.authors.insertMany([
 //     {
 //         name: 'Robert Martin',
