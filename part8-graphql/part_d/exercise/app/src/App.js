@@ -5,6 +5,7 @@ import Books from './components/Books'
 import NewBook from './components/NewBook'
 import Login from './components/Login'
 import Navbar from './components/Navbar'
+import Recommended from './components/Recommended'
 
 const App = () => {
     const [errorMessage, setErrorMessage] = useState(null)
@@ -32,6 +33,7 @@ const App = () => {
             <Authors show={page === 'authors'} />
             <Books show={page === 'books'} />
             <NewBook show={page === 'add'} />
+            <Recommended show={page === 'recommended'} />
             <Login
                 setError={notify}
                 setToken={setToken}

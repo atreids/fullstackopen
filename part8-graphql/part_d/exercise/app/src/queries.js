@@ -43,6 +43,15 @@ export const LOGIN = gql`
     }
 `
 
+export const ME = gql`
+    query {
+        me {
+            username
+            favouriteGenre
+        }
+    }
+`
+
 export const CREATE_BOOK = gql`
     mutation createBook(
         $title: String!
